@@ -3,6 +3,6 @@ dotenv.config();
 
 export const ENV = {
   PORT: process.env.PORT,
-  MONGO_URI: process.env.MONGO_URI,
+  MONGO_DB_URI: process.env.MONGO_DB_URI,
   NODE_ENV: process.env.NODE_ENV,
 };
