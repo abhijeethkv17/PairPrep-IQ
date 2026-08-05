@@ -1,12 +1,15 @@
 import mongoose from "mongoose";
-import {ENV} from "./env.js";
+import { ENV } from "./env.js";
 
 export const connectDB = async () => {
-    try {
-        const conn = await mongoose.connect(ENV.MONGO_DB_URI);
-        console.log("Connected to MongoDB: ", conn.connection.host);
-    } catch (error) {
-        console.error("Error connecting to MongoDB: ", error);
-        process.exit(1);
+  try {
+    if (!ENV.MONGO_DB_URI) {
+      throw new Error("MONGO_DB_URI is not defined in Environment variables");
     }
+    const conn = await mongoose.connect(ENV.MONGO_DB_URI);
+    console.log("Connected to MongoDB: ", conn.connection.host);
+  } catch (error) {
+    console.error("Error connecting to MongoDB: ", error);
+    process.exit(1);
+  }
 };
