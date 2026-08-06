@@ -17,7 +17,8 @@
     "express": "^5.2.1",
     "inngest": "^4.15.0",
     "mongoose": "^9.9.1",
-    "pairprep": "file:.."
+    "pairprep": "file:..",
+    "stream-chat": "^9.50.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
