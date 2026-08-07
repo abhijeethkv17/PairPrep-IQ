@@ -10,14 +10,14 @@ import { useNavigate } from "react-router";
 import {
   Channel,
   Chat,
-  MessageInput,
+  MessageComposer,
   MessageList,
   Thread,
   Window,
 } from "stream-chat-react";
 
 import "@stream-io/video-react-sdk/dist/css/styles.css";
-import "stream-chat-react/dist/css/v2/index.css";
+import "stream-chat-react/dist/css/index.css";
 
 function VideoCallUI({ chatClient, channel }) {
   const navigate = useNavigate();
@@ -95,7 +95,7 @@ function VideoCallUI({ chatClient, channel }) {
                   <Channel channel={channel}>
                     <Window>
                       <MessageList />
-                      <MessageInput />
+                      <MessageComposer />
                     </Window>
                     <Thread />
                   </Channel>

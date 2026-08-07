@@ -7,7 +7,7 @@ import {
   useSessionById,
 } from "../hooks/useSessions";
 import { PROBLEMS } from "../data/problems";
-import { executeCode } from "../lib/piston";
+import { executeCode } from "../lib/codebox";
 import Navbar from "../components/Navbar";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { getDifficultyBadgeClass } from "../lib/utils";
@@ -58,16 +58,9 @@ function SessionPage() {
     if (isHost || isParticipant) return;
 
     joinSessionMutation.mutate(id, { onSuccess: refetch });
-  }, [
-    session,
-    user,
-    loadingSession,
-    isHost,
-    isParticipant,
-    id,
-    joinSessionMutation,
-    refetch,
-  ]);
+
+    // remove the joinSessionMutation, refetch from dependencies to avoid infinite loop
+  }, [session, user, loadingSession, isHost, isParticipant, id]);
 
   // redirect the "participant" when session ends
   useEffect(() => {
