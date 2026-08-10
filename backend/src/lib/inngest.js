@@ -1,5 +1,6 @@
 import { Inngest } from "inngest";
 import { connectDB } from "./db.js";
+import { ENV } from "./env.js";
 import User from "../models/User.js";
 import { deleteStreamUser, upsertStreamUser } from "./stream.js";
 
@@ -15,12 +16,19 @@ const syncUser = inngest.createFunction(
 
     const { id, email_addresses, first_name, last_name, image_url } =
       event.data;
+    const email = email_addresses[0]?.email_address;
+
+    const adminEmails = (ENV.ADMIN_EMAILS || "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
 
     const newUser = {
       clerkId: id,
-      email: email_addresses[0]?.email_address,
+      email,
       name: `${first_name || ""} ${last_name || ""}`,
       profileImage: image_url,
+      role: adminEmails.includes(email?.toLowerCase()) ? "admin" : "user",
     };
 
     await User.create(newUser);
@@ -40,10 +48,8 @@ const deleteUserFromDB = inngest.createFunction(
   },
   async ({ event }) => {
     await connectDB();
-
     const { id } = event.data;
     await User.deleteOne({ clerkId: id });
-
     await deleteStreamUser(id.toString());
   },
 );
