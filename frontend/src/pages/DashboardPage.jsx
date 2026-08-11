@@ -6,6 +6,7 @@ import {
   useCreateSession,
   useMyRecentSessions,
 } from "../hooks/useSessions";
+import { useProblems } from "../hooks/useProblems";
 
 import Navbar from "../components/Navbar";
 import WelcomeSection from "../components/WelcomeSection";
@@ -19,6 +20,8 @@ function DashboardPage() {
   const { user } = useUser();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [roomConfig, setRoomConfig] = useState({ problem: "", difficulty: "" });
+  const { data: problemsData } = useProblems();
+  const problems = problemsData?.data || [];
 
   const createSessionMutation = useCreateSession();
 
@@ -28,13 +31,10 @@ function DashboardPage() {
     useMyRecentSessions();
 
   const handleCreateRoom = () => {
-    if (!roomConfig.problem || !roomConfig.difficulty) return;
+    if (!roomConfig.problemId || !roomConfig.difficulty) return;
 
     createSessionMutation.mutate(
-      {
-        problem: roomConfig.problem,
-        difficulty: roomConfig.difficulty.toLowerCase(),
-      },
+      { problemId: roomConfig.problemId, difficulty: roomConfig.difficulty },
       {
         onSuccess: (data) => {
           setShowCreateModal(false);
@@ -86,6 +86,7 @@ function DashboardPage() {
       <CreateSessionModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        problems={problems}
         roomConfig={roomConfig}
         setRoomConfig={setRoomConfig}
         onCreateRoom={handleCreateRoom}

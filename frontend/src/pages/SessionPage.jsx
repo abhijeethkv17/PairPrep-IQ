@@ -6,7 +6,6 @@ import {
   useJoinSession,
   useSessionById,
 } from "../hooks/useSessions";
-import { PROBLEMS } from "../data/problems";
 import { executeCode } from "../lib/codebox";
 import Navbar from "../components/Navbar";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -43,9 +42,7 @@ function SessionPage() {
     useStreamClient(session, loadingSession, isHost, isParticipant);
 
   // find the problem data based on session problem title
-  const problemData = session?.problem
-    ? Object.values(PROBLEMS).find((p) => p.title === session.problem)
-    : null;
+  const problemData = session?.problem || null;
 
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [code, setCode] = useState(
@@ -124,7 +121,7 @@ function SessionPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h1 className="text-3xl font-bold text-base-content">
-                          {session?.problem || "Loading..."}
+                          {session?.problem?.title || "Loading..."}
                         </h1>
                         {problemData?.category && (
                           <p className="text-base-content/60 mt-1">
