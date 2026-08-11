@@ -2,6 +2,15 @@ import { chatClient, streamClient } from "../lib/stream.js";
 import Session from "../models/Session.js";
 import Problem from "../models/Problem.js";
 
+const formatSessionProblem = (session, isAdmin) => {
+  const sessionObj = session.toObject ? session.toObject() : { ...session };
+  if (sessionObj.problem && !isAdmin) {
+    delete sessionObj.problem.referenceSolutions;
+    delete sessionObj.problem.testCases;
+  }
+  return sessionObj;
+};
+
 export async function createSession(req, res) {
   try {
     const { problemId, difficulty } = req.body;
@@ -45,15 +54,17 @@ export async function createSession(req, res) {
     await channel.create();
 
     const populatedSession = await session.populate("problem");
-    res.status(201).json({ session: populatedSession });
+    const isAdmin = req.user?.role === "admin";
+    res.status(201).json({ session: formatSessionProblem(populatedSession, isAdmin) });
   } catch (error) {
     console.log("Error in createSession controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
-export async function getActiveSessions(_, res) {
+export async function getActiveSessions(req, res) {
   try {
+    const isAdmin = req.user?.role === "admin";
     const sessions = await Session.find({ status: "active" })
       .populate("host", "name profileImage email clerkId")
       .populate("participant", "name profileImage email clerkId")
@@ -61,7 +72,8 @@ export async function getActiveSessions(_, res) {
       .sort({ createdAt: -1 })
       .limit(20);
 
-    res.status(200).json({ sessions });
+    const formatted = sessions.map((s) => formatSessionProblem(s, isAdmin));
+    res.status(200).json({ sessions: formatted });
   } catch (error) {
     console.log("Error in getActiveSessions controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
@@ -71,6 +83,7 @@ export async function getActiveSessions(_, res) {
 export async function getMyRecentSessions(req, res) {
   try {
     const userId = req.user._id;
+    const isAdmin = req.user?.role === "admin";
     const sessions = await Session.find({
       status: "completed",
       $or: [{ host: userId }, { participant: userId }],
@@ -79,7 +92,8 @@ export async function getMyRecentSessions(req, res) {
       .sort({ createdAt: -1 })
       .limit(20);
 
-    res.status(200).json({ sessions });
+    const formatted = sessions.map((s) => formatSessionProblem(s, isAdmin));
+    res.status(200).json({ sessions: formatted });
   } catch (error) {
     console.log("Error in getMyRecentSessions controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
@@ -89,13 +103,14 @@ export async function getMyRecentSessions(req, res) {
 export async function getSessionById(req, res) {
   try {
     const { id } = req.params;
+    const isAdmin = req.user?.role === "admin";
     const session = await Session.findById(id)
       .populate("host", "name email profileImage clerkId")
       .populate("participant", "name email profileImage clerkId")
       .populate("problem");
 
     if (!session) return res.status(404).json({ message: "Session not found" });
-    res.status(200).json({ session });
+    res.status(200).json({ session: formatSessionProblem(session, isAdmin) });
   } catch (error) {
     console.log("Error in getSessionById controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
@@ -107,6 +122,7 @@ export async function joinSession(req, res) {
     const { id } = req.params;
     const userId = req.user._id;
     const clerkId = req.user.clerkId;
+    const isAdmin = req.user?.role === "admin";
 
     const session = await Session.findById(id);
 
@@ -134,7 +150,7 @@ export async function joinSession(req, res) {
     const channel = chatClient.channel("messaging", session.callId);
     await channel.addMembers([clerkId]);
 
-    res.status(200).json({ session });
+    res.status(200).json({ session: formatSessionProblem(session, isAdmin) });
   } catch (error) {
     console.log("Error in joinSession controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
@@ -145,6 +161,7 @@ export async function endSession(req, res) {
   try {
     const { id } = req.params;
     const userId = req.user._id;
+    const isAdmin = req.user?.role === "admin";
 
     const session = await Session.findById(id);
 
@@ -173,7 +190,10 @@ export async function endSession(req, res) {
     session.status = "completed";
     await session.save();
 
-    res.status(200).json({ session, message: "Session ended successfully" });
+    res.status(200).json({
+      session: formatSessionProblem(session, isAdmin),
+      message: "Session ended successfully",
+    });
   } catch (error) {
     console.log("Error in endSession controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
