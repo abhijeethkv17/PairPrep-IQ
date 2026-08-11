@@ -95,12 +95,20 @@ export async function getProblems(req, res) {
     );
     const solvedSet = new Set(solved.map((s) => s.problem.toString()));
 
+    const isAdmin = req.user.role === "admin";
+
     res.status(200).json({
       success: true,
-      data: problems.map((p) => ({
-        ...p,
-        isSolved: solvedSet.has(p._id.toString()),
-      })),
+      data: problems.map((p) => {
+        if (!isAdmin) {
+          delete p.referenceSolutions;
+          delete p.testCases;
+        }
+        return {
+          ...p,
+          isSolved: solvedSet.has(p._id.toString()),
+        };
+      }),
     });
   } catch (error) {
     console.error("Error in getProblems controller:", error.message);
@@ -110,8 +118,14 @@ export async function getProblems(req, res) {
 
 export async function getProblemById(req, res) {
   try {
-    const problem = await Problem.findById(req.params.id);
+    const problem = await Problem.findById(req.params.id).lean();
     if (!problem) return res.status(404).json({ message: "Problem not found" });
+
+    if (req.user.role !== "admin") {
+      delete problem.referenceSolutions;
+      delete problem.testCases;
+    }
+
     res.status(200).json({ success: true, data: problem });
   } catch (error) {
     console.error("Error in getProblemById controller:", error.message);

@@ -13,8 +13,6 @@ function Navbar() {
   const { data: currentUserData } = useCurrentUser();
   const isAdmin = currentUserData?.user?.role === "admin";
 
-  console.log(location);
-
   const isActive = (path) => location.pathname === path;
 
   return (

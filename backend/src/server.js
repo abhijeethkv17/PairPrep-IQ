@@ -45,11 +45,22 @@ if (ENV.NODE_ENV === "production") {
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(ENV.PORT, () =>
+    const server = app.listen(ENV.PORT, () =>
       console.log("Server is running on port: ", ENV.PORT),
     );
+    server.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.error(
+          `Port ${ENV.PORT} is already in use. Is a Docker container (e.g. CodeBox) running on the same port?`,
+        );
+      } else {
+        console.error("Server error:", err);
+      }
+      process.exit(1);
+    });
   } catch (error) {
     console.error("Error starting the server: ", error);
+    process.exit(1);
   }
 };
 

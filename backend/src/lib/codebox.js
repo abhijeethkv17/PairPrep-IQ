@@ -1,6 +1,10 @@
 import axios from "axios";
 import { ENV } from "./env.js";
 
+if (!ENV.CODEBOX_API_URL) {
+  console.error("CODEBOX_API_URL is not set in environment variables");
+}
+
 const client = axios.create({
   baseURL: ENV.CODEBOX_API_URL,
   headers: {
