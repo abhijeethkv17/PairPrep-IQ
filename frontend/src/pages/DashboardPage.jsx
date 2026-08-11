@@ -19,7 +19,10 @@ function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useUser();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [roomConfig, setRoomConfig] = useState({ problem: "", difficulty: "" });
+  const [roomConfig, setRoomConfig] = useState({
+    problemId: "",
+    difficulty: "",
+  });
   const { data: problemsData } = useProblems();
   const problems = problemsData?.data || [];
 
