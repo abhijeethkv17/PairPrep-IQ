@@ -1,10 +1,17 @@
 import { Link, useLocation } from "react-router";
-import { BookOpenIcon, LayoutDashboardIcon, SparklesIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  LayoutDashboardIcon,
+  PlusCircleIcon,
+  SparklesIcon,
+} from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
 import { useCurrentUser } from "../hooks/useCurrentUser";
 
 function Navbar() {
   const location = useLocation();
+  const { data: currentUserData } = useCurrentUser();
+  const isAdmin = currentUserData?.user?.role === "admin";
 
   console.log(location);
 
