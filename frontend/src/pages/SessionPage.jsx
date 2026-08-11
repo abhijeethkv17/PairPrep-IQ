@@ -6,7 +6,7 @@ import {
   useJoinSession,
   useSessionById,
 } from "../hooks/useSessions";
-import { executeCode } from "../lib/codebox";
+import { useSubmitSolution } from "../hooks/useSubmissions";
 import Navbar from "../components/Navbar";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { getDifficultyBadgeClass } from "../lib/utils";
@@ -17,6 +17,9 @@ import OutputPanel from "../components/OutputPanel";
 import useStreamClient from "../hooks/useStreamClient";
 import { StreamCall, StreamVideo } from "@stream-io/video-react-sdk";
 import VideoCallUI from "../components/VideoCallUI";
+
+import toast from "react-hot-toast";
+import confetti from "canvas-confetti";
 
 function SessionPage() {
   const navigate = useNavigate();
@@ -33,6 +36,7 @@ function SessionPage() {
 
   const joinSessionMutation = useJoinSession();
   const endSessionMutation = useEndSession();
+  const submitMutation = useSubmitSolution();
 
   const session = sessionData?.session;
   const isHost = session?.host?.clerkId === user?.id;
@@ -41,12 +45,12 @@ function SessionPage() {
   const { call, channel, chatClient, isInitializingCall, streamClient } =
     useStreamClient(session, loadingSession, isHost, isParticipant);
 
-  // find the problem data based on session problem title
+  // session.problem arrives already populated as a full Problem object
   const problemData = session?.problem || null;
 
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [code, setCode] = useState(
-    problemData?.starterCode?.[selectedLanguage] || "",
+    problemData?.codeSnippets?.[selectedLanguage.toUpperCase()] || "",
   );
 
   // auto-join session if user is not already a participant and not the host
@@ -66,29 +70,50 @@ function SessionPage() {
     if (session.status === "completed") navigate("/dashboard");
   }, [session, loadingSession, navigate]);
 
-  // update code when problem loads or changes
+  // update code when problem loads or language changes
   useEffect(() => {
-    if (problemData?.starterCode?.[selectedLanguage]) {
-      setCode(problemData.starterCode[selectedLanguage]);
+    if (problemData?.codeSnippets?.[selectedLanguage.toUpperCase()]) {
+      setCode(problemData.codeSnippets[selectedLanguage.toUpperCase()]);
+      setOutput(null);
     }
   }, [problemData, selectedLanguage]);
 
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     setSelectedLanguage(newLang);
-    // use problem-specific starter code
-    const starterCode = problemData?.starterCode?.[newLang] || "";
-    setCode(starterCode);
+    setCode(problemData?.codeSnippets?.[newLang.toUpperCase()] || "");
     setOutput(null);
+  };
+
+  const triggerConfetti = () => {
+    confetti({ particleCount: 80, spread: 250, origin: { x: 0.2, y: 0.6 } });
+    confetti({ particleCount: 80, spread: 250, origin: { x: 0.8, y: 0.6 } });
   };
 
   const handleRunCode = async () => {
     setIsRunning(true);
     setOutput(null);
 
-    const result = await executeCode(selectedLanguage, code);
-    setOutput(result);
-    setIsRunning(false);
+    try {
+      const result = await submitMutation.mutateAsync({
+        problemId: problemData._id,
+        language: selectedLanguage.toUpperCase(),
+        sourceCode: code,
+      });
+
+      setOutput(result.submission);
+
+      if (result.submission.status === "Accepted") {
+        triggerConfetti();
+        toast.success("All test cases passed! Great job!");
+      } else {
+        toast.error("Some test cases failed. Check the output panel.");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Code execution failed!");
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const handleEndSession = () => {
@@ -121,11 +146,11 @@ function SessionPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h1 className="text-3xl font-bold text-base-content">
-                          {session?.problem?.title || "Loading..."}
+                          {problemData?.title || "Loading..."}
                         </h1>
-                        {problemData?.category && (
+                        {problemData?.tags?.length > 0 && (
                           <p className="text-base-content/60 mt-1">
-                            {problemData.category}
+                            {problemData.tags.join(", ")}
                           </p>
                         )}
                         <p className="text-base-content/60 mt-2">
@@ -167,91 +192,29 @@ function SessionPage() {
                   </div>
 
                   <div className="p-6 space-y-6">
-                    {/* problem desc */}
+                    {/* problem description */}
                     {problemData?.description && (
                       <div className="bg-base-100 rounded-xl shadow-sm p-5 border border-base-300">
                         <h2 className="text-xl font-bold mb-4 text-base-content">
                           Description
                         </h2>
-                        <div className="space-y-3 text-base leading-relaxed">
-                          <p className="text-base-content/90">
-                            {problemData.description.text}
-                          </p>
-                          {problemData.description.notes?.map((note, idx) => (
-                            <p key={idx} className="text-base-content/90">
-                              {note}
-                            </p>
-                          ))}
-                        </div>
+                        <p className="text-base-content/90 whitespace-pre-wrap">
+                          {problemData.description}
+                        </p>
                       </div>
                     )}
 
-                    {/* examples section */}
-                    {problemData?.examples &&
-                      problemData.examples.length > 0 && (
-                        <div className="bg-base-100 rounded-xl shadow-sm p-5 border border-base-300">
-                          <h2 className="text-xl font-bold mb-4 text-base-content">
-                            Examples
-                          </h2>
-
-                          <div className="space-y-4">
-                            {problemData.examples.map((example, idx) => (
-                              <div key={idx}>
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="badge badge-sm">
-                                    {idx + 1}
-                                  </span>
-                                  <p className="font-semibold text-base-content">
-                                    Example {idx + 1}
-                                  </p>
-                                </div>
-                                <div className="bg-base-200 rounded-lg p-4 font-mono text-sm space-y-1.5">
-                                  <div className="flex gap-2">
-                                    <span className="text-primary font-bold min-w-[70px]">
-                                      Input:
-                                    </span>
-                                    <span>{example.input}</span>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <span className="text-secondary font-bold min-w-[70px]">
-                                      Output:
-                                    </span>
-                                    <span>{example.output}</span>
-                                  </div>
-                                  {example.explanation && (
-                                    <div className="pt-2 border-t border-base-300 mt-2">
-                                      <span className="text-base-content/60 font-sans text-xs">
-                                        <span className="font-semibold">
-                                          Explanation:
-                                        </span>{" "}
-                                        {example.explanation}
-                                      </span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
                     {/* Constraints */}
-                    {problemData?.constraints &&
-                      problemData.constraints.length > 0 && (
-                        <div className="bg-base-100 rounded-xl shadow-sm p-5 border border-base-300">
-                          <h2 className="text-xl font-bold mb-4 text-base-content">
-                            Constraints
-                          </h2>
-                          <ul className="space-y-2 text-base-content/90">
-                            {problemData.constraints.map((constraint, idx) => (
-                              <li key={idx} className="flex gap-2">
-                                <span className="text-primary">•</span>
-                                <code className="text-sm">{constraint}</code>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                    {problemData?.constraints && (
+                      <div className="bg-base-100 rounded-xl shadow-sm p-5 border border-base-300">
+                        <h2 className="text-xl font-bold mb-4 text-base-content">
+                          Constraints
+                        </h2>
+                        <p className="text-sm text-base-content/90 whitespace-pre-wrap font-mono">
+                          {problemData.constraints}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </Panel>
