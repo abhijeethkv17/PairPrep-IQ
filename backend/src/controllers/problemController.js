@@ -76,13 +76,11 @@ export async function createProblem(req, res) {
       createdBy: req.user._id,
     });
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Problem created successfully",
-        data: problem,
-      });
+    res.status(201).json({
+      success: true,
+      message: "Problem created successfully",
+      data: problem,
+    });
   } catch (error) {
     console.error("Error in createProblem controller:", error.message);
     res.status(500).json({ message: "Failed to save problem to database" });
@@ -123,18 +121,48 @@ export async function getProblemById(req, res) {
 
 export async function updateProblem(req, res) {
   try {
+    const { referenceSolutions, testCases } = req.body;
+
+    if (referenceSolutions && testCases) {
+      for (const [language, sourceCode] of Object.entries(referenceSolutions)) {
+        const languageId = getLanguageId(language);
+        const submissions = testCases.map(({ input, output }) => ({
+          source_code: sourceCode,
+          language_id: languageId,
+          stdin: input,
+          expected_output: output,
+        }));
+
+        const submitted = await submitBatch(submissions);
+        const results = await pollBatchResults(submitted.map((r) => r.token));
+
+        const failedIndex = results.findIndex((r) => r.status?.id !== 3);
+        if (failedIndex !== -1) {
+          return res.status(400).json({
+            message: `Validation failed for ${language}`,
+            testCase: {
+              input: submissions[failedIndex].stdin,
+              expected: submissions[failedIndex].expected_output,
+              actualOutput: results[failedIndex].stdout,
+              error:
+                results[failedIndex].stderr ||
+                results[failedIndex].compile_output,
+            },
+          });
+        }
+      }
+    }
+
     const problem = await Problem.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
     if (!problem) return res.status(404).json({ message: "Problem not found" });
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Problem updated successfully",
-        data: problem,
-      });
+    res.status(200).json({
+      success: true,
+      message: "Problem updated successfully",
+      data: problem,
+    });
   } catch (error) {
     console.error("Error in updateProblem controller:", error.message);
     res.status(500).json({ message: "Failed to update problem" });
