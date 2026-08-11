@@ -8,6 +8,7 @@ import {
   updateProblem,
   deleteProblem,
 } from "../controllers/problemController.js";
+import { submitSolution } from "../controllers/submissionController.js";
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.get("/:id", protectRoute, getProblemById);
 router.post("/", protectRoute, requireAdmin, createProblem);
 router.put("/:id", protectRoute, requireAdmin, updateProblem);
 router.delete("/:id", protectRoute, requireAdmin, deleteProblem);
+router.post("/:id/submit", protectRoute, submitSolution);
 
 export default router;
