@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { BookOpenIcon, LayoutDashboardIcon, SparklesIcon } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 function Navbar() {
   const location = useLocation();
@@ -67,6 +68,20 @@ function Navbar() {
               <span className="font-medium hidden sm:inline">Dashbord</span>
             </div>
           </Link>
+
+          {isAdmin && (
+            <Link
+              to={"/admin/problems/new"}
+              className="px-4 py-2.5 rounded-lg transition-all duration-200 hover:bg-base-200 text-base-content/70 hover:text-base-content"
+            >
+              <div className="flex items-center gap-x-2.5">
+                <PlusCircleIcon className="size-4" />
+                <span className="font-medium hidden sm:inline">
+                  New Problem
+                </span>
+              </div>
+            </Link>
+          )}
 
           <div className="ml-4 mt-2">
             <UserButton />

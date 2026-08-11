@@ -7,6 +7,9 @@ import DashboardPage from "./pages/DashboardPage";
 import ProblemPage from "./pages/ProblemPage";
 import ProblemsPage from "./pages/ProblemsPage";
 import SessionPage from "./pages/SessionPage";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
+import CreateProblemPage from "./pages/admin/CreateProblemPage";
+import EditProblemPage from "./pages/admin/EditProblemPage";
 
 function App() {
   const { isSignedIn, isLoaded } = useUser();
@@ -37,6 +40,30 @@ function App() {
         <Route
           path="/session/:id"
           element={isSignedIn ? <SessionPage /> : <Navigate to={"/"} />}
+        />
+        <Route
+          path="/admin/problems/new"
+          element={
+            isSignedIn ? (
+              <ProtectedAdminRoute>
+                <CreateProblemPage />
+              </ProtectedAdminRoute>
+            ) : (
+              <Navigate to={"/"} />
+            )
+          }
+        />
+        <Route
+          path="/admin/problems/:id/edit"
+          element={
+            isSignedIn ? (
+              <ProtectedAdminRoute>
+                <EditProblemPage />
+              </ProtectedAdminRoute>
+            ) : (
+              <Navigate to={"/"} />
+            )
+          }
         />
       </Routes>
 
