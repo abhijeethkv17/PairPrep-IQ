@@ -48,7 +48,7 @@ export const useDeleteProblem = () => {
     mutationKey: ["deleteProblem"],
     mutationFn: problemApi.deleteProblem,
     onSuccess: () => {
-      toast.success("Problem deleted successfully!");
+      toast.success("Problem archived successfully!");
       queryClient.invalidateQueries({ queryKey: ["problems"] });
     },
     onError: (error) =>

@@ -33,7 +33,9 @@ function ProblemsPage() {
   const handleDelete = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm("Delete this problem? This cannot be undone.")) {
+    if (
+      confirm("Archive this problem? It will be hidden from users immediately.")
+    ) {
       deleteProblemMutation.mutate(id);
     }
   };

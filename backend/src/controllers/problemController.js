@@ -1,5 +1,6 @@
 import Problem from "../models/Problem.js";
 import ProblemSolved from "../models/ProblemSolved.js";
+import Session from "../models/Session.js";
 import {
   getLanguageId,
   submitBatch,
@@ -118,13 +119,13 @@ export async function getProblems(req, res) {
 
 export async function getProblemById(req, res) {
   try {
-    const problem = await Problem.findById(req.params.id).lean();
-    if (!problem) return res.status(404).json({ message: "Problem not found" });
-
-    if (req.user.role !== "admin") {
-      delete problem.referenceSolutions;
-      delete problem.testCases;
-    }
+    const isAdmin = req.user.role === "admin";
+    const filter = isAdmin ? {} : { isArchived: { $ne: true } };
+    const problems = await Problem.find(filter).sort({ createdAt: -1 }).lean();
+    const solved = await ProblemSolved.find({ user: req.user._id }).select(
+      "problem",
+    );
+    const solvedSet = new Set(solved.map((s) => s.problem.toString()));
 
     res.status(200).json({ success: true, data: problem });
   } catch (error) {
@@ -185,11 +186,27 @@ export async function updateProblem(req, res) {
 
 export async function deleteProblem(req, res) {
   try {
-    const problem = await Problem.findByIdAndDelete(req.params.id);
+    const activeSession = await Session.exists({
+      problem: req.params.id,
+      status: "active",
+    });
+    if (activeSession) {
+      return res.status(409).json({
+        message:
+          "Cannot delete a problem that has an active session in progress",
+      });
+    }
+
+    const problem = await Problem.findByIdAndUpdate(
+      req.params.id,
+      { isArchived: true },
+      { new: true },
+    );
     if (!problem) return res.status(404).json({ message: "Problem not found" });
+
     res
       .status(200)
-      .json({ success: true, message: "Problem deleted successfully" });
+      .json({ success: true, message: "Problem archived successfully" });
   } catch (error) {
     console.error("Error in deleteProblem controller:", error.message);
     res.status(500).json({ message: "Failed to delete problem" });
