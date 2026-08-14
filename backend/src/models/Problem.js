@@ -4,7 +4,11 @@ const problemSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
     description: { type: String, required: true },
-    difficulty: { type: String, enum: ["EASY", "MEDIUM", "HARD"], required: true },
+    difficulty: {
+      type: String,
+      enum: ["EASY", "MEDIUM", "HARD"],
+      required: true,
+    },
     tags: { type: [String], default: [] },
     constraints: { type: String, required: true },
     hints: { type: String, default: "" },
@@ -37,7 +41,12 @@ const problemSchema = new mongoose.Schema(
       JAVA: { type: String, required: true },
     },
 
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    isArchived: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

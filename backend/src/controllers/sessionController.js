@@ -24,7 +24,9 @@ export async function createSession(req, res) {
     }
 
     const problem = await Problem.findById(problemId);
-    if (!problem) return res.status(404).json({ message: "Problem not found" });
+    if (!problem || problem.isArchived) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
 
     const callId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
@@ -55,7 +57,9 @@ export async function createSession(req, res) {
 
     const populatedSession = await session.populate("problem");
     const isAdmin = req.user?.role === "admin";
-    res.status(201).json({ session: formatSessionProblem(populatedSession, isAdmin) });
+    res
+      .status(201)
+      .json({ session: formatSessionProblem(populatedSession, isAdmin) });
   } catch (error) {
     console.log("Error in createSession controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
