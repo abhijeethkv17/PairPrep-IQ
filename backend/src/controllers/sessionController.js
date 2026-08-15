@@ -159,7 +159,9 @@ export async function joinSession(req, res) {
       .populate("participant", "name profileImage email clerkId")
       .populate("problem");
 
-    res.status(200).json({ session: formatSessionProblem(session, isAdmin) });
+    res
+      .status(200)
+      .json({ session: formatSessionProblem(populatedSession, isAdmin) });
   } catch (error) {
     console.log("Error in joinSession controller:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
