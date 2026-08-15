@@ -154,6 +154,11 @@ export async function joinSession(req, res) {
     const channel = chatClient.channel("messaging", session.callId);
     await channel.addMembers([clerkId]);
 
+    const populatedSession = await Session.findById(id)
+      .populate("host", "name profileImage email clerkId")
+      .populate("participant", "name profileImage email clerkId")
+      .populate("problem");
+
     res.status(200).json({ session: formatSessionProblem(session, isAdmin) });
   } catch (error) {
     console.log("Error in joinSession controller:", error.message);

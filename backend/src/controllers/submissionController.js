@@ -7,15 +7,41 @@ import {
   pollBatchResults,
 } from "../lib/codebox.js";
 
+// maps a Judge0 status id to one of Submission's allowed status strings
+// (3 = Accepted, 4 = Wrong Answer, 5 = TLE, 6 = Compile Error, 7-14 = various Runtime Errors)
+function deriveOverallStatus(results, allPassed) {
+  if (allPassed) return "Accepted";
+
+  const firstFailure = results.find((r) => r.status?.id !== 3);
+  const statusId = firstFailure?.status?.id;
+
+  if (statusId === 6) return "Compile Error";
+  if (statusId === 5) return "Time Limit Exceeded";
+  if (statusId >= 7 && statusId <= 14) return "Runtime Error";
+
+  return "Wrong Answer";
+}
+
 export async function submitSolution(req, res) {
   try {
     const { id } = req.params;
     const { language, sourceCode } = req.body;
 
+    if (!language || !sourceCode) {
+      return res
+        .status(400)
+        .json({ message: "language and sourceCode are required" });
+    }
+
     const problem = await Problem.findById(id);
     if (!problem) return res.status(404).json({ message: "Problem not found" });
 
     const languageId = getLanguageId(language);
+    if (!languageId) {
+      return res
+        .status(400)
+        .json({ message: `Unsupported language: ${language}` });
+    }
     const submissions = problem.testCases.map(({ input, output }) => ({
       source_code: sourceCode,
       language_id: languageId,
@@ -45,7 +71,7 @@ export async function submitSolution(req, res) {
       problem: id,
       sourceCode,
       language,
-      status: allPassed ? "Accepted" : "Wrong Answer",
+      status: deriveOverallStatus(results, allPassed),
       testCaseResults,
     });
 

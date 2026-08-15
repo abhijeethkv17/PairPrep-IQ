@@ -190,46 +190,53 @@ function ProblemForm({
           ))}
         </div>
 
-        <div>
-          <label className="label">Example Input</label>
-          <input
-            className="input input-bordered w-full font-mono text-sm"
-            {...register(`examples.${activeLang}.input`)}
-          />
-        </div>
-        <div>
-          <label className="label">Example Output</label>
-          <input
-            className="input input-bordered w-full font-mono text-sm"
-            {...register(`examples.${activeLang}.output`)}
-          />
-        </div>
-        <div>
-          <label className="label">Example Explanation (optional)</label>
-          <input
-            className="input input-bordered w-full"
-            {...register(`examples.${activeLang}.explanation`)}
-          />
-        </div>
+        {LANGUAGES.map((lang) => (
+          <div
+            key={lang}
+            className={activeLang === lang ? "space-y-4" : "hidden"}
+          >
+            <div>
+              <label className="label">Example Input</label>
+              <input
+                className="input input-bordered w-full font-mono text-sm"
+                {...register(`examples.${lang}.input`)}
+              />
+            </div>
+            <div>
+              <label className="label">Example Output</label>
+              <input
+                className="input input-bordered w-full font-mono text-sm"
+                {...register(`examples.${lang}.output`)}
+              />
+            </div>
+            <div>
+              <label className="label">Example Explanation (optional)</label>
+              <input
+                className="input input-bordered w-full"
+                {...register(`examples.${lang}.explanation`)}
+              />
+            </div>
 
-        <div>
-          <label className="label">Starter Code (shown to the user)</label>
-          <textarea
-            className="textarea textarea-bordered w-full h-40 font-mono text-sm"
-            {...register(`codeSnippets.${activeLang}`)}
-          />
-        </div>
+            <div>
+              <label className="label">Starter Code (shown to the user)</label>
+              <textarea
+                className="textarea textarea-bordered w-full h-40 font-mono text-sm"
+                {...register(`codeSnippets.${lang}`)}
+              />
+            </div>
 
-        <div>
-          <label className="label">
-            Reference Solution (used to validate test cases — not shown to
-            users)
-          </label>
-          <textarea
-            className="textarea textarea-bordered w-full h-40 font-mono text-sm"
-            {...register(`referenceSolutions.${activeLang}`)}
-          />
-        </div>
+            <div>
+              <label className="label">
+                Reference Solution (used to validate test cases — not shown to
+                users)
+              </label>
+              <textarea
+                className="textarea textarea-bordered w-full h-40 font-mono text-sm"
+                {...register(`referenceSolutions.${lang}`)}
+              />
+            </div>
+          </div>
+        ))}
       </div>
 
       <button type="submit" className="btn btn-primary" disabled={isSubmitting}>

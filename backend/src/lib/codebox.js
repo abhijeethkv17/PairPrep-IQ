@@ -35,11 +35,17 @@ export async function submitBatch(submissions) {
   return results;
 }
 
+const MAX_POLL_ATTEMPTS = 30; // ~30s total at 1s between rounds
+
 export async function pollBatchResults(tokens) {
   const resultsByToken = new Map();
   let pending = [...tokens];
+  let attempts = 0;
 
   while (pending.length > 0) {
+    if (attempts++ >= MAX_POLL_ATTEMPTS) {
+      throw new Error("Judge0 polling timed out waiting for results");
+    }
     const stillPending = [];
     for (const tokenChunk of chunk(pending, BATCH_LIMIT)) {
       const { data } = await client.get("/submissions/batch", {
