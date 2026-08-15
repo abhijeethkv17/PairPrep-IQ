@@ -95,13 +95,13 @@ export async function createProblem(req, res) {
 
 export async function getProblems(req, res) {
   try {
-    const problems = await Problem.find().sort({ createdAt: -1 }).lean();
+    const isAdmin = req.user.role === "admin";
+    const filter = isAdmin ? {} : { isArchived: { $ne: true } };
+    const problems = await Problem.find(filter).sort({ createdAt: -1 }).lean();
     const solved = await ProblemSolved.find({ user: req.user._id }).select(
       "problem",
     );
     const solvedSet = new Set(solved.map((s) => s.problem.toString()));
-
-    const isAdmin = req.user.role === "admin";
 
     res.status(200).json({
       success: true,
@@ -124,13 +124,14 @@ export async function getProblems(req, res) {
 
 export async function getProblemById(req, res) {
   try {
+    const problem = await Problem.findById(req.params.id).lean();
+    if (!problem) return res.status(404).json({ message: "Problem not found" });
+
     const isAdmin = req.user.role === "admin";
-    const filter = isAdmin ? {} : { isArchived: { $ne: true } };
-    const problems = await Problem.find(filter).sort({ createdAt: -1 }).lean();
-    const solved = await ProblemSolved.find({ user: req.user._id }).select(
-      "problem",
-    );
-    const solvedSet = new Set(solved.map((s) => s.problem.toString()));
+    if (!isAdmin) {
+      delete problem.referenceSolutions;
+      delete problem.testCases;
+    }
 
     res.status(200).json({ success: true, data: problem });
   } catch (error) {
