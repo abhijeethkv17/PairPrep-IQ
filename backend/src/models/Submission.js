@@ -12,7 +12,13 @@ const submissionSchema = new mongoose.Schema(
     language: { type: String, required: true },
     status: {
       type: String,
-      enum: ["Accepted", "Wrong Answer"],
+      enum: [
+        "Accepted",
+        "Wrong Answer",
+        "Compile Error",
+        "Runtime Error",
+        "Time Limit Exceeded",
+      ],
       required: true,
     },
     testCaseResults: [

@@ -36,6 +36,11 @@ export async function createProblem(req, res) {
 
     for (const [language, sourceCode] of Object.entries(referenceSolutions)) {
       const languageId = getLanguageId(language);
+      if (!languageId) {
+        return res
+          .status(400)
+          .json({ message: `Unsupported language: ${language}` });
+      }
       const submissions = testCases.map(({ input, output }) => ({
         source_code: sourceCode,
         language_id: languageId,
@@ -134,13 +139,37 @@ export async function getProblemById(req, res) {
   }
 }
 
+const UPDATABLE_PROBLEM_FIELDS = [
+  "title",
+  "description",
+  "difficulty",
+  "tags",
+  "examples",
+  "constraints",
+  "hints",
+  "editorial",
+  "testCases",
+  "codeSnippets",
+  "referenceSolutions",
+];
+
 export async function updateProblem(req, res) {
   try {
-    const { referenceSolutions, testCases } = req.body;
+    const updates = {};
+    for (const field of UPDATABLE_PROBLEM_FIELDS) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
+
+    const { referenceSolutions, testCases } = updates;
 
     if (referenceSolutions && testCases) {
       for (const [language, sourceCode] of Object.entries(referenceSolutions)) {
         const languageId = getLanguageId(language);
+        if (!languageId) {
+          return res
+            .status(400)
+            .json({ message: `Unsupported language: ${language}` });
+        }
         const submissions = testCases.map(({ input, output }) => ({
           source_code: sourceCode,
           language_id: languageId,
@@ -168,7 +197,7 @@ export async function updateProblem(req, res) {
       }
     }
 
-    const problem = await Problem.findByIdAndUpdate(req.params.id, req.body, {
+    const problem = await Problem.findByIdAndUpdate(req.params.id, updates, {
       new: true,
       runValidators: true,
     });
