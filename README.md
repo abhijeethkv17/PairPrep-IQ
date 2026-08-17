@@ -25,10 +25,25 @@ Video call. Live chat. A real, judged code editor. One shared problem — two pe
 </div>
 
 <p align="center">
-  <img src="./docs/screenshots/dashboard-placeholder.png" alt="PairPrep-IQ dashboard screenshot placeholder" width="85%" />
+  <img src="Screenshots/Landing Page.png" alt="PairPrep-IQ dashboard screenshot placeholder" width="85%" />
+</p>
+<p align="center">
+  <img src="Screenshots/Problems Page.png" alt="PairPrep-IQ dashboard screenshot placeholder" width="85%" />
+</p>
+<p align="center">
+  <img src="Screenshots/Dashboard Page.png" alt="PairPrep-IQ dashboard screenshot placeholder" width="85%" />
+</p>
+<p align="center">
+  <img src="Screenshots/Session Page.png" alt="PairPrep-IQ dashboard screenshot placeholder" width="85%" />
+</p>
+<p align="center">
+  <img src="Screenshots/Session Problem Accepted.png" alt="PairPrep-IQ dashboard screenshot placeholder" width="85%" />
+</p>
+<p align="center">
+  <img src="Screenshots/Session Problem wrong answer.png" alt="PairPrep-IQ dashboard screenshot placeholder" width="85%" />
 </p>
 
-<p align="center"><i>📸 Screenshot placeholder — see <a href="#-screenshots">Screenshots</a> for the full shot list to capture and drop in here.</i></p>
+<p align="center"><i>📸 Screenshots of PairPrep-IQ — see <a href="#-screenshots">Screenshots</a> for the full shot list.</i></p>
 
 <br/>
 
