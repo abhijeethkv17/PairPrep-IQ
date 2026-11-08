@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import {
   useEndSession,
   useJoinSession,
+  useLeaveSession,
   useSessionById,
 } from "../hooks/useSessions";
 import { useSubmitSolution } from "../hooks/useSubmissions";
@@ -36,6 +37,7 @@ function SessionPage() {
 
   const joinSessionMutation = useJoinSession();
   const endSessionMutation = useEndSession();
+  const leaveSessionMutation = useLeaveSession();
   const submitMutation = useSubmitSolution();
 
   const session = sessionData?.session;
@@ -117,6 +119,15 @@ function SessionPage() {
     } finally {
       setIsRunning(false);
     }
+  };
+
+  const handleLeaveCall = () => {
+    // only the participant slot needs freeing — the host stays "active"
+    // until they explicitly end the session
+    if (isParticipant) {
+      leaveSessionMutation.mutate(id);
+    }
+    navigate("/dashboard");
   };
 
   const handleEndSession = () => {
@@ -277,7 +288,11 @@ function SessionPage() {
                 <div className="h-full">
                   <StreamVideo client={streamClient}>
                     <StreamCall call={call}>
-                      <VideoCallUI chatClient={chatClient} channel={channel} />
+                      <VideoCallUI
+                        chatClient={chatClient}
+                        channel={channel}
+                        onLeave={handleLeaveCall}
+                      />
                     </StreamCall>
                   </StreamVideo>
                 </div>
