@@ -11,66 +11,88 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
   const [channel, setChannel] = useState(null);
   const [isInitializingCall, setIsInitializingCall] = useState(true);
 
+  // use stable primitives, not the whole `session` object — react-query
+  // returns a new object reference every 5s poll even when nothing changed,
+  // which was causing this effect to leave + rejoin the call repeatedly
+  const callId = session?.callId;
+  const sessionStatus = session?.status;
+
   useEffect(() => {
+    if (!callId) return;
+    if (!isHost && !isParticipant) return;
+    if (sessionStatus === "completed") return;
+
+    let cancelled = false;
     let videoCall = null;
     let chatClientInstance = null;
 
     const initCall = async () => {
-      if (!session?.callId) return;
-      if (!isHost && !isParticipant) return;
-      if (session.status === "completed") return;
-
       try {
         const { token, userId, userName, userImage } =
           await sessionApi.getStreamToken();
 
         const client = await initializeStreamClient(
-          {
-            id: userId,
-            name: userName,
-            image: userImage,
-          },
+          { id: userId, name: userName, image: userImage },
           token,
         );
+        if (cancelled) return;
+
+        videoCall = client.call("default", callId);
+        await videoCall.join({ create: true });
+
+        if (cancelled) {
+          // effect was torn down mid-join — leave right away instead of
+          // leaving an orphaned call session behind
+          await videoCall.leave().catch(() => {});
+          return;
+        }
 
         setStreamClient(client);
-
-        videoCall = client.call("default", session.callId);
-        await videoCall.join({ create: true });
         setCall(videoCall);
 
         const apiKey = import.meta.env.VITE_STREAM_API_KEY;
         chatClientInstance = StreamChat.getInstance(apiKey);
-
         await chatClientInstance.connectUser(
-          {
-            id: userId,
-            name: userName,
-            image: userImage,
-          },
+          { id: userId, name: userName, image: userImage },
           token,
         );
+        if (cancelled) {
+          await chatClientInstance.disconnectUser().catch(() => {});
+          return;
+        }
         setChatClient(chatClientInstance);
 
-        const chatChannel = chatClientInstance.channel(
-          "messaging",
-          session.callId,
-        );
+        const chatChannel = chatClientInstance.channel("messaging", callId);
         await chatChannel.watch();
-        setChannel(chatChannel);
+        if (!cancelled) setChannel(chatChannel);
       } catch (error) {
-        toast.error("Failed to join video call");
+        if (!cancelled) toast.error("Failed to join video call");
         console.error("Error init call", error);
       } finally {
-        setIsInitializingCall(false);
+        if (!cancelled) setIsInitializingCall(false);
       }
     };
 
-    if (session && !loadingSession) initCall();
+    initCall();
 
-    // cleanup - performance reasons
+    // best-effort cleanup for tab close / hard navigation, which never
+    // triggers the React cleanup function below
+    const handlePageHide = () => {
+      if (videoCall) videoCall.leave().catch(() => {});
+      if (chatClientInstance)
+        chatClientInstance.disconnectUser().catch(() => {});
+    };
+    window.addEventListener("pagehide", handlePageHide);
+
     return () => {
-      // iife
+      cancelled = true;
+      window.removeEventListener("pagehide", handlePageHide);
+      setStreamClient(null);
+      setCall(null);
+      setChatClient(null);
+      setChannel(null);
+      setIsInitializingCall(true);
+
       (async () => {
         try {
           if (videoCall) await videoCall.leave();
@@ -81,15 +103,9 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
         }
       })();
     };
-  }, [session, loadingSession, isHost, isParticipant]);
+  }, [callId, sessionStatus, loadingSession, isHost, isParticipant]);
 
-  return {
-    streamClient,
-    call,
-    chatClient,
-    channel,
-    isInitializingCall,
-  };
+  return { streamClient, call, chatClient, channel, isInitializingCall };
 }
 
 export default useStreamClient;
