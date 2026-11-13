@@ -759,9 +759,7 @@ This makes the app deployable as a **single monolithic Node service** — Render
 
 ## 📸 Screenshots
 
-> Screenshots aren't checked into the repo yet — this is the shot list to capture and drop into `docs/screenshots/`, then link from the hero section at the top of this file.
-
-| Screenshot | What it should show |
+| Screenshot | What it shows |
 |---|---|
 | **Dashboard** | Welcome section, stats cards, active sessions list, recent sessions list |
 | **Problems list** | Difficulty badges, solved indicators, admin edit/delete controls visible |
@@ -770,9 +768,11 @@ This makes the app deployable as a **single monolithic Node service** — Render
 | **Session chat** | The collapsible chat panel open mid-call |
 | **Admin problem form** | The multi-language tabbed editor with a validation error visible |
 
+<!--
 **Suggested GIF recordings:** (1) creating a session end-to-end and landing in the call, (2) submitting a solution and watching the per-test-case output panel populate, (3) the confetti moment on an Accepted submission.
 
 **Suggested demo video outline:** 0:00 landing page → 0:15 sign-up → 0:30 solving a problem solo → 1:00 creating a session → 1:20 a second browser/participant joining → 1:45 both editors + shared video/chat → 2:15 submitting and getting Accepted → 2:30 a quick admin-side problem creation.
+-->
 
 <br/>
 
