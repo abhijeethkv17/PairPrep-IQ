@@ -122,7 +122,7 @@ Most interview-prep tools are single-player: you open a problem, you solve it, y
 
 ## 🏗 Architecture Overview
 
-PairPrep-IQ is a classic **MERN** monolith split into two workspaces — `frontend` (Vite + React) and `backend` (Express) — plus three managed third-party platforms that do the heavy lifting Claude... err, that no single-developer project should reinvent:
+PairPrep-IQ is a classic **MERN** monolith split into two workspaces — `frontend` (Vite + React) and `backend` (Express) — plus three managed third-party platforms that do the heavy lifting, that no single-developer project should reinvent:
 
 - **Frontend** — a Vite-built React 19 SPA. Routing via `react-router`, server-state via **TanStack Query**, forms via **React Hook Form + Zod**, styling via **Tailwind CSS v4 + DaisyUI**, and the code editor via **Monaco**.
 - **Backend** — a single Express 5 app exposing a REST API under `/api/*`, backed by **MongoDB** via **Mongoose**. In production it also serves the built frontend as static files from the same process (see [Deployment](#-deployment)).
